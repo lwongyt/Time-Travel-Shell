@@ -1,0 +1,22 @@
+Anhvu Nguyen - 603906879
+Leslie Wong - 903941414
+
+Lab 1a.
+
+	Our read-command.c has two functions to aid the make_command_stream function.
+Within our make_command_stream function, the first step is tokenizing the characters
+obtained from the stream. operators are simply added to a token array with the
+exception of the '&' and '|' characters. Further checks were done to seperate 'or' 
+and 'pipeline' as well as 'and' and an invalid character (single ampersand). At this
+point we also check to ensure the number of left and right parentheses are equal to
+ensure all subshells are complete.
+	The first function we added was 'partition'. This function seperates the tokens
+by line. Checks for balanced subshells are also included here. The second function we
+added was 'parser'. 'parser' was used to ensure each token was valid with respect to
+one another. For example, a redirection must be preceded and followed by a word or 
+parentheses. If there are no errors found, the 'parser' will then create a command
+and feed it to 'partition'. 'partition' combines the commands into a command_stream
+and feeds that back into make_command_stream.
+	Testing our code with the included test files and our own, the code seems to work.
+However, there might have been cases we did not thing of. If there are any problems
+encountered, we will fix and add to the file.
