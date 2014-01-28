@@ -54,7 +54,7 @@ parser(token* tArr, int start, int end)
 			closedParen--;
 		
 		//check if there are multiple semicolons in succession
-		if (tArr[i].type == SEQUENCE_TOKEN || tArr[i+1].type == SEQUENCE_TOKEN)
+		if (tArr[i].type == SEQUENCE_TOKEN && tArr[i+1].type == SEQUENCE_TOKEN)
 			error(1,0,"%i: Simultaneous multiple sequences are invalid",
 				tArr[i].lineNumber);
 
@@ -568,7 +568,7 @@ make_command_stream (int (*get_next_byte) (void *),
 	tArr[tokenIndex].type = END_TOKEN;
 	tArr[tokenIndex].lineNumber = lineNum;
 
-	/*
+	/*		
 	int j;
 	for (j= 0; j < tokenIndex+1; j++)
 	{
