@@ -170,16 +170,20 @@ parser(token* tArr, int start, int end)
 	{
 		if (tArr[i].type == REDIRECTRIGHT_TOKEN || tArr[i].type == REDIRECTLEFT_TOKEN)
 		{
-			if(tArr[i].type == REDIRECTRIGHT_TOKEN && redirectRight2 != -1)
+			if(tArr[i].type == REDIRECTRIGHT_TOKEN)
 			{
-				error(1,0, "%i: Invalid number of '>' or '<'.\n",
+				if(redirectRight2 != -1){
+					error(1,0, "%i: Invalid number of '>' or '<'.\n",
 					  tArr[i].lineNumber);
+				}
 				redirectRight2 = i;
 			}
-			if(tArr[i].type == REDIRECTLEFT_TOKEN && redirectLeft2 != -1)	
+			if(tArr[i].type == REDIRECTLEFT_TOKEN)	
 			{
-				error(1,0, "%i: Invalid number of '>' or '<'.\n",
+				if(redirectLeft2 != -1){
+					error(1,0, "%i: Invalid number of '>' or '<'.\n",
 					  tArr[i].lineNumber);
+				}
 				redirectLeft2 = i;
 			}
 			//redirectRight2 = i;
@@ -190,7 +194,7 @@ parser(token* tArr, int start, int end)
 		if (tArr[i].type == WORD_TOKEN)
 			lastToken = WORD_TOKEN;
 		
-		//ensure the token following an end parentheses is a word
+		//ensure the token following an end parentheses isn't a word
 		if (tArr[i].type == RIGHT_PAREN_TOKEN)
 		{
 			if (lastToken == WORD_TOKEN)
@@ -253,10 +257,10 @@ parser(token* tArr, int start, int end)
 					if (redirectRight2 != -1 && tArr[redirectRight2+1].type !=WORD_TOKEN)
 						error(1,0, "%i: A word must follow '>'.\n",
 							  tArr[i].lineNumber);
-					if (redirectLeft2 == -1) 
-						cmd->input = NULL;
+					if (redirectRight2 == -1) 
+						cmd->output = NULL;
 					else
-						cmd->input = tArr[redirectLeft2+1].word;
+						cmd->output = tArr[redirectRight2+1].word;
 						
 					cmd->u.subshell_command = parser(tArr, openParen+1, i);
 					return cmd;
@@ -340,7 +344,7 @@ partition(token* tArr, int tArrSize)
 	while((end < tArrSize) && (tArr[end].type != END_TOKEN))
 	{
 		int openParenCounter = 0;
-		int isSubshellBalanced = 0;
+		int isSubshellBalanced = 1;
 		
 		while((openParenCounter != 0 || tArr[end].type != NEWLINE_TOKEN) &&
 			   tArr[end].type != END_TOKEN)
@@ -348,11 +352,12 @@ partition(token* tArr, int tArrSize)
 			//keeps track of parentheses to ensure it is balanced
 			if (tArr[end].type == LEFT_PAREN_TOKEN)
 			{
-				if (isSubshellBalanced == 1 && openParenCounter == 0)
+				if (isSubshellBalanced == 0 && openParenCounter == 0)
 				{
 					error(1,0, "%i: Unbalanced parentheses.\n", tArr[end].lineNumber);
 				}
 				openParenCounter++;
+				isSubshellBalanced = 0;
 			}
 			else if (tArr[end].type == RIGHT_PAREN_TOKEN)
 			{
@@ -568,7 +573,7 @@ make_command_stream (int (*get_next_byte) (void *),
 	tArr[tokenIndex].type = END_TOKEN;
 	tArr[tokenIndex].lineNumber = lineNum;
 
-	/*		
+	/*			
 	int j;
 	for (j= 0; j < tokenIndex+1; j++)
 	{
@@ -613,6 +618,7 @@ make_command_stream (int (*get_next_byte) (void *),
 		}
 	}
 	*/
+
 	struct command_stream* stream = partition(tArr, tokenIndex);
 	free(tArr);
 	return stream;

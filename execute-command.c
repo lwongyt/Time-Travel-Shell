@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 
 /* FIXME: You may need to add #include directives, macro definitions,
    static function definitions, etc.  */
@@ -111,6 +112,24 @@ execute_command (command_t c, int time_travel)
 					
 
 			case SIMPLE_COMMAND:
+				if(strcmp(c->u.word[0],"exec") == 0) {
+					if(c->u.word[1] == '\0')
+						error(1,0,"No command following exec");
+					if(c->input != NULL) {
+						in = open(c->input, O_RDONLY);
+						if(in == -1)
+							error(1,0,"Error occurred while opening file1.");
+						dup2(in, 0);
+						close(in);
+					}
+					if(c->output != NULL) {
+						out = open(c->output, O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+						dup2(out,1);
+						close(out);
+					}
+					execvp(c->u.word[1],c->u.word+1);
+					error(1,0,"Error when executing command2.");
+				}
 				child = fork();
 				if(child < 0)
 					error(1,0,"Problems occurred during forking1.");
