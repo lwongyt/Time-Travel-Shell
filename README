@@ -20,3 +20,28 @@ and feeds that back into make_command_stream.
 	Testing our code with the included test files and our own, the code seems to work.
 However, there might have been cases we did not thing of. If there are any problems
 encountered, we will fix and add to the file.
+
+Lab 1b.
+	For this part of the lab, we implemented the execute_command function within the
+execute-command.c file. We are given a command struct and an int indicating time travel
+as parameters. As time travel is part of lab 1c, we did not implement this portion and
+simply created and implemented normal execution within a conditional statement that
+time travel is zero. To implement execution, we created a switch statement to look at
+the command type. For the AND_COMMAND and the the OR_COMMAND, we execute the left command
+(through recursion) to find its value. Based on the value, we then choose whether we will 
+execute the right command. For the SEQUENCE_COMMAND, we would first recurse through
+the left command and the the right command. For the SIMPLE_COMMAND, we first check if
+the word it has exec, which we need to account for as stated by the specifications.
+If we do, then we will execute the command that follows it (the next word). If not,
+we will then we will simply execute the command by forking and executing there so as to
+not stop the parent process from reading the shell script. This last part is the same
+for the SUBSHELL_COMMAND. For the PIPE_COMMAND, we will use the pipe function to be
+able to execute the left side and put it into the stdin and when we execute the right
+side we will have the result from the stdout.
+	While testing, we realized that there were problems within our parser from lab1a.
+Within our code to test for multiple semicolons, we accidentally used && rather than ||
+to check the current and next token. There were also other portions in which we had
+mixed up the input and the output of the command struct. These problems have been 
+rectified. Creating test cases within a mytest.sh file and comparing the results ran on
+timetrash and the results ran on sh, we find the the results seem to be the same. However,
+there may have been test cases that we have overlooked.
