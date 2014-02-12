@@ -218,3 +218,274 @@ execute_command (command_t c, int time_travel)
 		}
 	}
 }
+
+void
+getDep(command_t cmd, comDep* dList)
+{
+	if(cmd == NULL)
+		return;
+
+	if(cmd->type == SUBSHELL_COMMAND)
+	{
+		getDep(cmd->u.subshell_command, dList);
+		if(cmd->input != NULL)
+		{
+			if(dList->inputCounter >= dList->maxInputCounter)
+			{
+				dList->maxInputCounter += 2 * INITIAL_LENGTH;
+				dList->input = (char**) checked_realloc (dList->input, sizeof(char*) * 
+					dList->maxInputCounter);
+			}
+			dList->input[dList->inputCounter] = cmd->input;
+			dList->inputCounter++;
+		}
+		if(cmd->output != NULL)
+		{
+			if(dList->outputCounter >= dList->maxOutputCounter)
+			{
+				dList->maxOutputCounter += 2 * INITIAL_LENGTH;
+				dList->output = (char**) checked_realloc (dList->output, sizeof(char*) *
+					dList->maxOutputCounter);
+			}
+			dList->output[dList->outputCounter] = cmd->output;
+			dList->outputCounter++;
+		}
+	}
+	
+	else if(cmd->type == SIMPLE_COMMAND)
+	{
+		if(dList->input == NULL)
+			dList->input = (char**) checked_malloc(sizeof(char*) * INITIAL_LENGTH);
+		
+		if(dList->output == NULL)
+			dList->output = (char**) checked_malloc(sizeof(char*) * INITIAL_LENGTH);
+
+		int i = 1;
+		while(cmd->u.word[i] != NULL)
+		{
+			if(dList->inputCounter >= dList->maxInputCounter)
+			{
+				dList->maxInputCounter += 2 * INITIAL_LENGTH;
+				dList->input = (char**) checked_realloc(dList->input, sizeof(char*) * 
+					dList->maxInputCounter);
+			}
+			dList->input[dList->inputCounter] = cmd->u.word[i];
+			dList->inputCounter++;
+			i++;
+		}
+		
+		if(cmd->input != NULL)
+		{
+			if(dList->inputCounter >= dList->maxInputCounter)
+         {
+            dList->maxInputCounter += 2 * INITIAL_LENGTH;
+            dList->input = (char**) checked_realloc(dList->input, sizeof(char*) *
+               dList->maxInputCounter);
+         }
+         dList->input[dList->inputCounter] = cmd->input;
+         dList->inputCounter++;
+		}
+
+		if(cmd->output != NULL)
+		{
+			if(dList->outputCounter >= dList->maxOutputCounter)
+         {
+            dList->maxOutputCounter += 2 * INITIAL_LENGTH;
+            dList->output = (char**) checked_realloc(dList->output, sizeof(char*) *
+               dList->maxOutputCounter);
+         }
+         dList->output[dList->outputCounter] = cmd->output;
+         dList->outputCounter++;
+		}
+	}
+	else 
+	{
+		getDep(cmd->u.command[0], dList);
+		getDep(cmd->u.command[1], dList);
+	}
+}
+		
+
+comDep**
+findDep(struct command_stream* comStream)
+{
+	struct command_stream* cmd = comStream;
+	comDep** comDepList = (comDep**) checked_malloc(sizeof(comDep**) * INITIAL_LENGTH);
+	
+	int maxLength = INITIAL_LENGTH;
+	int count = 0;
+	comDep* curDepList;
+	
+	while(cmd != NULL)
+	{
+		curDepList->inputCounter = 0;
+		curDepList->outputCounter = 0;
+		curDepList->maxInputCounter = 0;
+		curDepList->maxOutputCounter = 0;
+		curDepList->dependsOnCounter = 0;
+		curDepList->maxDependsOn = INITIAL_LENGTH;
+		curDepList->input = NULL;
+		curDepList->output = NULL;
+		curDepList->dependsOn = NULL;
+		curDepList->wasRun = 0;
+
+		getDep(cmd->command, curDepList);
+		if(count >= maxLength)
+		{
+			maxLength += 2 * INITIAL_LENGTH;
+			comDepList = (comDep**) checked_realloc(comDepList, (sizeof(comDep*) * maxLength));
+		}
+
+		comDepList[count] = curDepList;
+		count++;
+		cmd = cmd->next;
+	}
+
+	int deps, index;
+	for(deps = 0; deps < count; deps++)
+	{
+		struct comDep* dList = comDepList[deps];
+		char** depInput = dList->input;
+		char** depOutput = dList->output;
+		int depInputCounter = dList->inputCounter;
+		int depOutputCounter = dList->outputCounter;
+ 		dList->dependsOn = NULL;
+		dList->dependsOnCounter = 0;
+		dList->maxDependsOn = INITIAL_LENGTH;
+		
+		for(index = deps-1; index >= 0; index--)
+		{
+			int isFinished = 0;
+			int inDeps, outIndex;
+			char** currOut = comDepList[index]->output;
+			int currOutCounter = comDepList[index]->outputCounter;
+		
+			for(inDeps = 0; inDeps < depInputCounter; inDeps++)
+			{
+				for(outIndex = 0; outIndex < currOutCounter; outIndex++)
+				{
+					if(!strcmp(depInput[inDeps], currOut[outIndex]))
+					{
+						if(dList->dependsOn == NULL)
+							dList->dependsOn = (int*) checked_malloc(sizeof(int) * INITIAL_LENGTH);
+						if(dList->dependsOnCounter >= dList->maxDependsON)
+						{
+							dList->maxDependson += 2 * INITIAL_LENGTH;
+							dList->dependsOn = (int*) checked_realloc(dList->dependsOn, sizeof(int) *
+								dList->maxDependsOn);
+						}
+						dList->dependsOn[dList->dependsOnCounter] = index;
+						dList->dependsOnCounter++;
+						isFinished=1;
+						break;
+					}
+				}
+				if(isFinished == 1)
+					break;
+			}
+			
+			if(isFinished == 0)
+			{
+				int outputDep;
+				for(outputDep = 0; outputDep < depOutputCounter; outputDep++)
+				{
+					for(outIndex = 0; outIndex < currOutCounter; outIndex++)
+					{
+						if(!strcmp(depOutput[outputDep], currOut[outIndex]))
+						{
+							if(dList->dependsOn == NULL)
+								dList->dependsOn = (int*) checked_malloc(sizeof(int) * INITIAL_LENGTH);
+							if(dList->dependsOnCounter >= dList->maxDependsOn)
+							{
+								dList->maxDependsOn += 2 * INITIAL_LENGTH;
+								dList->dependsOn = (int*) checked_malloc(sizeof(int) * dList->maxDependsOn);		
+							}
+							dList->dependsOn[dList->dependsOnCounter] = index;
+							dList->dependsOnCounter++;
+							isFinished = 1;
+							break;
+						}
+					}
+					if(isFinished == 1)
+						break:
+				}	
+			}
+		}
+	}
+	topCmdCounter = count;
+	return comDepList;
+}
+
+void
+timeTraveler(struct command_stream* cmd, comDep** dList)
+{
+	int finishedCmd = 0;
+	if(cmd == NULL)
+		return;
+
+	while(finishedCmd < topCmdCounter)
+	{
+		struct command_stream* iter = cmd->command;
+		int* cmdArr[topCmdCounter];
+		int i;
+		for(i = 0; i < topCmdCounter; i++)
+		{
+			cmdArr[i] = iter;
+			iter = iter->next;
+		}
+
+		int* indepCmds = (int*) checked_malloc(sizeof(int) * INITIAL_LENGTH);
+		int indepCmdCounter = 0;
+		int maxCmd = INITIAL_LENGTH;
+
+		for(i = 0; i < topCmdCounter; i++)
+		{
+			if(dList[i]->dependsOnCounter == 0 && dList[i]->wasRun == 0)
+			{
+				if(indCmdCounter > maxCmd)
+				{
+					maxCmd += 2 * INITIAL_LENGTH;
+					indepCmds = (int*) checked_realloc(indepCmds, sizeof(int) * maxCmd);
+				}
+				indepCmds[indepCmdCounter] = i;
+				indepCmdCounter++;
+			}
+		}
+		
+		pid_t pidArr[indepCmdCounter];
+
+		for(i = 0; i < indepCmdCounter; i++)
+		{
+			pidArr[i] = -1;
+		}
+
+		for(i = 0; i < indepCmdCounter; i++)
+		{
+			pid_t p = fork();
+			if(p == 0)
+			{
+				execute_command(cmdArr[indepCmds[i]],0);
+				exit(0);
+			}
+			pidArr[i] = p;
+		}
+
+		int doneCounter = 0;
+		while(true)
+		{
+			int status;
+			for(i = 0; i < indepCmdCounter; i++)
+			{
+				if(pidArr[i] != -1 && !waitpid(pidArr[i], &status, WNOHANG))
+					continue;
+				if(pidArr[i] != -1)
+				{
+					doneCounter++;
+					pidArr[i] = -1;
+				}
+			}
+			if(doneCounter >= indepCmdCounter)
+				break;
+		}
+	}
+}
