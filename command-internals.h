@@ -1,22 +1,8 @@
 // UCLA CS 111 Lab 1 command internals
 
-#define INITIAL_LENGTH 4
+#define INITIAL_LENGTH 5
 
 int topCmdCounter;
-
-typedef struct
-{
-   char** input;
-   char** output;
-   int inputCounter;
-   int outputCounter;
-   int maxInputCounter;
-   int maxOutputCounter;
-   int* dependsOn;
-   int dependsOnCounter;
-   int maxDependsOn;
-   int wasRun;	
-} comDep;
 
 typedef enum 
 {

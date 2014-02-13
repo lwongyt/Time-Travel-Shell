@@ -3,6 +3,27 @@
 typedef struct command *command_t;
 typedef struct command_stream *command_stream_t;
 
+typedef struct
+{
+   char** input;
+   char** output;
+   int inputCounter;
+   int outputCounter;
+   int maxInputCounter;
+   int maxOutputCounter;
+   int* dependsOn;
+   int dependsOnCounter;
+   int maxDependsOn;
+   int wasRun;
+} comDep;
+
+
+//contain the command and the command following
+struct command_stream {
+        command_t command;
+        struct command_stream* next;
+};
+
 /* Create a command stream from LABEL, GETBYTE, and ARG.  A reader of
    the command stream will invoke GETBYTE (ARG) to get the next byte.
    GETBYTE will return the next input byte, or a negative number
@@ -23,3 +44,11 @@ void execute_command (command_t, int);
 /* Return the exit status of a command, which must have previously been executed.
    Wait for the command, if it is not already finished.  */
 int command_status (command_t);
+
+comDep** findDep(struct command_stream*);
+
+void timeTraveler(struct command_stream*, comDep**);
+
+void free_comDep(comDep**);
+
+void free_comStream(command_stream_t);

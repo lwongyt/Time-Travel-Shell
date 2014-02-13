@@ -4,7 +4,6 @@
 #include <error.h>
 #include <getopt.h>
 #include <stdio.h>
-
 #include "command.h"
 
 static char const *program_name;
@@ -57,7 +56,10 @@ main (int argc, char **argv)
 
   if(time_travel == 1) 
   {
-    comDep** commandDependencies = findDep(command_stream);  
+	comDep** commandDependencies = findDep(command_stream); 
+	timeTraveler(command_stream, commandDependencies);
+	free_comDep(commandDependencies);
+	free_comStream(command_stream); 
   }
   
   else

@@ -25,12 +25,6 @@ makeCommand(enum command_type type)
 	return cmd;
 }
 
-//contain the command and the command following
-struct command_stream {
-	command_t command;
-	struct command_stream* next;
-};
-
 //parse partioned sections of the input
 command_t
 parser(token* tArr, int start, int end)
