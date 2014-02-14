@@ -45,3 +45,20 @@ mixed up the input and the output of the command struct. These problems have bee
 rectified. Creating test cases within a mytest.sh file and comparing the results ran on
 timetrash and the results ran on sh, we find the the results seem to be the same. However,
 there may have been test cases that we have overlooked.
+
+Lab 1c.
+	For this part of the lab, we implemented parallelization by finding the dependecy
+of each command and running independent commands concurrently. To to this however, we
+changed the main.c file to be able to run time travel independently of execute_command.
+This is because our algorithm utilizes the command_stream rather than just the command.
+First, we got through the command stream and find the inputs and outputs of the command.
+This is all put into a struct called comDep (command dependencies). With an array of these,
+one comDep per command, we have an array with all the inputs and outputs of each. Then, 
+we cross-reference each index of the array of dependencies in order to find out who 
+they depend on. This information is also added into the struct. We also keep count of the
+number of dependencies it has. Finally, we find all independent commands and run them 
+concurrently using fork(). With the independent commands done, we update the dependencies
+of each command and continue to run until all commands have been done.
+	From our testing, we were able to run programs that are not parallelizable with the
+same results as the program without parallelizing. We also tested our parallelizing with
+multiple commands of sleep. These tests were successful.
