@@ -331,6 +331,25 @@ getDep(command_t cmd, comDep* dList)
 	}
 }
 
+//Split sequence commands into simple commands
+void
+fixSeq(struct command_stream* tempCmd)
+{
+     while(tempCmd != NULL)
+     {   
+         if(tempCmd->command->type == SEQUENCE_COMMAND)
+         {   
+             struct command_stream* temp = (struct command_stream*) checked_malloc(sizeof(struct command_stream));
+             temp->command = tempCmd->command->u.command[1];
+             temp->next = tempCmd->next;
+             tempCmd->command = tempCmd->command->u.command[0];
+             tempCmd->next = temp;
+         }
+		 else
+         	tempCmd = tempCmd->next;
+     }
+
+}
 
 comDep**
 findDep(struct command_stream* comStream)
@@ -343,7 +362,22 @@ findDep(struct command_stream* comStream)
 	int maxLength = INITIAL_LENGTH * 2;
 	int count = 0;
 	comDep* curDepList;
+	struct command_stream* tempCmd = cmd;
+	fixSeq(tempCmd);
 	
+	while(tempCmd != NULL)
+	{
+		if(tempCmd->command->type == SEQUENCE_COMMAND)
+		{
+			struct command_stream* temp = (struct command_stream*) checked_malloc(sizeof(struct command_stream));
+			temp->command = tempCmd->command->u.command[1];
+			temp->next = tempCmd->next;
+			tempCmd->command = tempCmd->command->u.command[0];
+			tempCmd->next = temp;
+		}
+		tempCmd = tempCmd->next;
+	}
+
 	//loop through each command of the command stream, create a dependency list for each command
 	//initilize all the values in the command dependency list (counters to 0, rest to NULL)
 	while(cmd != NULL)
